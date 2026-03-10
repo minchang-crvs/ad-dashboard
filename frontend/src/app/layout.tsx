@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "캠페인 ROAS",
-  description: "MVP version of the ROAS Dashboard",
+  description: "Cross-channel Campaign ROAS Dashboard",
 };
 
 export default function RootLayout({
