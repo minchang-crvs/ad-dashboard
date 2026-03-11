@@ -4,6 +4,7 @@ import pandas as pd
 import io
 import math
 import gspread
+import time
 
 from mock_data import MOCK_DF
 from database import get_google_sheet
@@ -78,6 +79,12 @@ async def upload_excel(file: UploadFile = File(...), media: str = "Meta"):
                 
             rows_to_insert = df.values.tolist()
             sheet.append_rows(rows_to_insert)
+            
+            # Invalidate cache after new upload so the frontend refreshes
+            global _df_cache
+            _df_cache["data"] = None
+            _df_cache["last_fetched"] = 0
+            
             return {"message": f"Successfully processed and appended {len(df)} rows to Google Sheets", "rows": len(df)}
         else:
             return {"message": "Google sheet not connected. Parsed successfully but fell back to mock mode (data not saved).", "rows": len(df)}
@@ -90,8 +97,21 @@ def sanitize_nan(val):
         return 0
     return val
 
+# Simple in-memory cache for Google Sheets data (TTL: 5 minutes)
+_df_cache = {
+    "data": None,
+    "last_fetched": 0
+}
+CACHE_TTL = 300
+
 def get_base_dataframe() -> pd.DataFrame:
-    """Fetch from Google Sheets or fallback to mock data."""
+    """Fetch from Google Sheets or fallback to mock data (with 5-minute cache)."""
+    global _df_cache
+    
+    current_time = time.time()
+    if _df_cache["data"] is not None and (current_time - _df_cache["last_fetched"]) < CACHE_TTL:
+        return _df_cache["data"].copy()
+        
     try:
         sheet = get_google_sheet()
         if sheet:
@@ -103,7 +123,10 @@ def get_base_dataframe() -> pd.DataFrame:
                 for col in numeric_cols:
                     if col in df.columns:
                         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-                return df
+                        
+                _df_cache["data"] = df
+                _df_cache["last_fetched"] = current_time
+                return df.copy()
     except Exception as e:
         print(f"Error fetching real data: {e}. Falling back to mock data.")
     return MOCK_DF.copy()
