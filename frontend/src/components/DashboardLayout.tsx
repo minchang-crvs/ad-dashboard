@@ -30,7 +30,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <AppShell.Header>
                 <Group h="100%" px="md">
                     <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-                    <Title order={3}>Inspire/d Ad Dashboard</Title>
+                    <Title order={3}>Ad Dashboard</Title>
                 </Group>
             </AppShell.Header>
 
