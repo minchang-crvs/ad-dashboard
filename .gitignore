@@ -42,6 +42,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Secrets
+backend/google_credentials.json
+
 # python
 __pycache__/
 *.py[cod]
